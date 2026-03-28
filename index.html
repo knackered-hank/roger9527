@@ -7,55 +7,76 @@
     <style>
         :root { --primary-color: #007aff; --bg-color: #000; --card-bg: #1c1c1e; --text-main: #fff; --text-sub: #8e8e93; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        header { width: 100%; padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1c1c1e 0%, #000 100%); }
+        header { width: 100%; padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1c1c1e 0%, #000 100%); position: sticky; top: 0; z-index: 100; }
         .status-bar { font-size: 14px; color: var(--primary-color); margin-top: 10px; font-weight: 500; }
-        #adan-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; width: 100%; max-width: 1200px; padding: 20px; box-sizing: border-box; }
-        .gallery-item { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid #38383a; transition: transform 0.2s; }
-        .file-name { color: var(--primary-color); font-weight: 600; font-size: 16px; margin-bottom: 8px; word-break: break-all; }
-        .file-info { font-size: 12px; color: var(--text-sub); line-height: 1.6; }
+        #adan-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; width: 100%; max-width: 1200px; padding: 20px; box-sizing: border-box; }
+        .gallery-item { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid #38383a; transition: all 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .gallery-item:active { transform: scale(0.95); background: #2c2c2e; }
+        .file-icon { font-size: 40px; margin-bottom: 10px; }
+        .file-name { color: var(--text-main); font-weight: 500; font-size: 14px; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px; }
+        .file-info { font-size: 11px; color: var(--text-sub); margin-top: 8px; }
         .loading { margin-top: 50px; color: var(--text-sub); }
-        hr { border: 0; border-top: 1px solid #38383a; margin: 12px 0; }
     </style>
 </head>
 <body>
     <header>
         <h1>阿丹時光膠囊</h1>
-        <div id="status" class="status-bar">基地連線中...</div>
+        <div id="status" class="status-bar">正在登入基地...</div>
     </header>
+
     <div id="adan-gallery"></div>
-    <div id="loading" class="loading">正在解鎖膠囊...</div>
+    <div id="loading" class="loading">正在掃描金庫檔案...</div>
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
+        const API_URL = "https://adan-api.hanknah02.workers.dev";
+
+        function getIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
+            if (['mp4', 'mov', 'avi'].includes(ext)) return '🎥';
+            if (['mp3', 'm4a', 'wav'].includes(ext)) return '🎵';
+            if (['zip', 'rar', '7z'].includes(ext)) return '📦';
+            if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) return '📄';
+            return '📁';
+        }
+
+        async function downloadFile(key) {
+            const profile = await liff.getProfile();
+            // 直接轉跳到下載網址
+            window.location.href = `${API_URL}?userId=${profile.userId}&key=${encodeURIComponent(key)}`;
+        }
+
         async function initAdan() {
-            const statusEl = document.getElementById('status');
-            const galleryEl = document.getElementById('adan-gallery');
-            const loadingEl = document.getElementById('loading');
             try {
                 await liff.init({ liffId: "2009633088-LqIEGiJZ" });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 const profile = await liff.getProfile();
-                statusEl.innerText = `歡迎回來，${profile.displayName}`;
+                document.getElementById('status').innerText = `你好，${profile.displayName}！`;
 
-                // 🎯 指向你現在部署成功的 adan-api Worker
-                const response = await fetch(`https://adan-api.hanknah02.workers.dev?userId=${profile.userId}`);
-                if (!response.ok) throw new Error('基地連線失敗');
-                
+                const response = await fetch(`${API_URL}?userId=${profile.userId}`);
                 const files = await response.json();
-                loadingEl.style.display = 'none';
+                
+                document.getElementById('loading').style.display = 'none';
+                const galleryEl = document.getElementById('adan-gallery');
+
                 if (files && files.length > 0) {
                     files.forEach(file => {
                         const card = document.createElement('div');
                         card.className = 'gallery-item';
-                        card.innerHTML = `<div class="file-name">📄 ${file.name}</div><hr><div class="file-info">⚖️ 檔案大小：${file.size}<br>📅 存入時間：${file.date}</div>`;
+                        card.onclick = () => downloadFile(file.key);
+                        card.innerHTML = `
+                            <div class="file-icon">${getIcon(file.name)}</div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-info">${file.size}<br>${file.date.split(' ')[0]}</div>
+                        `;
                         galleryEl.appendChild(card);
                     });
                 } else {
-                    galleryEl.innerHTML = '<div style="margin-top:100px;text-align:center;color:#8e8e93;width:100%;">目前膠囊裡還沒有回憶喔！🚀</div>';
+                    galleryEl.innerHTML = '<div style="width:100%;text-align:center;color:#8e8e93;margin-top:100px;">金庫是空的喔 🚀</div>';
                 }
             } catch (err) {
-                statusEl.innerText = "❌ 基地連線發生錯誤";
-                loadingEl.innerText = "錯誤訊息：" + err.message;
+                document.getElementById('status').innerText = "❌ 連線失敗";
             }
         }
         window.onload = initAdan;
