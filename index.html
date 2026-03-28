@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>阿丹時光膠囊</title>
+    <meta property="og:title" content="時光膠囊小精靈">
+    <meta property="og:description" content="你的專屬秘密基地，守護每一份珍貴回憶。">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1516534775068-ba3e84529519?q=80&w=500&auto=format&fit=crop">
+    
     <style>
         :root { --primary-color: #007aff; --bg-color: #000; --card-bg: #1c1c1e; --text-main: #fff; --text-sub: #8e8e93; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
@@ -30,7 +36,7 @@
     </header>
 
     <div id="adan-gallery"></div>
-    <div id="loading" class="loading">正在掃描金庫...</div>
+    <div id="loading" class="loading">正在呈現基地...</div>
 
     <div id="preview-modal">
         <div id="preview-title" style="margin-bottom: 12px; font-weight: bold; text-align: center; width: 90%;"></div>
@@ -115,7 +121,7 @@
                 document.getElementById('loading').style.display = 'none';
                 
                 const galleryEl = document.getElementById('adan-gallery');
-                galleryEl.innerHTML = ""; // 清空舊內容
+                galleryEl.innerHTML = "";
                 files.forEach(file => {
                     const card = document.createElement('div');
                     card.className = 'gallery-item';
