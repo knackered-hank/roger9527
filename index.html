@@ -179,26 +179,23 @@
             object-fit: contain;
         }
 
-        /* 3. 傳奇語錄區 (已修改為靜態顯示) */
+        /* 3. 傳奇語錄區 */
         #immersive-scroll {
             background-color: #fff;
             color: var(--dark-text);
-            /* 移除 300vh，讓其高度由內容決定 */
             min-height: 50vh; 
             padding: 100px 20px;
-            /* 確保內容在區塊內居中 */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        /* 新增的語錄樣式，用於固定顯示在頁面中央 */
         .static-quote {
             font-size: 128px;
             font-weight: 900;
             color: var(--dark-text);
-            margin: 20px 0; /* 給予上下間距 */
+            margin: 20px 0;
             line-height: 1.2;
             text-align: center;
         }
@@ -258,39 +255,16 @@
 
         /* RWD 調整 */
         @media (max-width: 768px) {
-            .section h2 {
-                font-size: 40px;
-            }
-            .section p {
-                font-size: 18px;
-            }
-            #hero h1 {
-                font-size: 50px;
-            }
-            #hero h3 {
-                font-size: 24px;
-            }
-            .feature-card {
-                flex-direction: column;
-                padding: 20px;
-            }
-            .feature-card:nth-child(even) {
-                flex-direction: column;
-            }
-            .feature-text {
-                padding: 20px 0;
-                text-align: center;
-            }
-            .feature-image {
-                width: 100%;
-                height: 200px;
-            }
-            .gallery-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .static-quote {
-                font-size: 56px; /* 行動版字體縮小 */
-            }
+            .section h2 { font-size: 40px; }
+            .section p { font-size: 18px; }
+            #hero h1 { font-size: 50px; }
+            #hero h3 { font-size: 24px; }
+            .feature-card { flex-direction: column; padding: 20px; }
+            .feature-card:nth-child(even) { flex-direction: column; }
+            .feature-text { padding: 20px 0; text-align: center; }
+            .feature-image { width: 100%; height: 200px; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .static-quote { font-size: 56px; }
         }
     </style>
 </head>
@@ -385,17 +359,14 @@
         <p>&copy; 2025 Roger Fan Site. All rights reserved. 僅為懷念與致哀目的製作，非官方網站。</p>
     </footer>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const heroHeading = document.getElementById('hero-heading');
             const heroSubheading = document.getElementById('hero-subheading');
             const featureCards = document.querySelectorAll('.feature-card');
-            // 移除了 scrollQuotes 相關定義
             const galleryItems = document.querySelectorAll('.gallery-item');
-            
 
-            // 1. Hero 區塊動畫 (載入即出現)
+            // 1. Hero 區塊動畫
             setTimeout(() => {
                 heroHeading.style.transition = 'opacity 1s, transform 1s';
                 heroSubheading.style.transition = 'opacity 1s, transform 1s 0.3s';
@@ -405,31 +376,20 @@
                 heroSubheading.style.transform = 'translateY(0)';
             }, 100);
 
-
             // 2. 滾動觀察器
-            const observerOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.2
-            };
-
-            const observer = new IntersectionObserver((entries, observer) => {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.2 };
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        // 特點卡片 (Feature Cards) 漸入
                         if (entry.target.classList.contains('feature-card')) {
                             entry.target.style.transition = 'opacity 1s, transform 1s';
                             entry.target.style.opacity = '1';
                             entry.target.style.transform = 'translateY(0)';
-                            observer.unobserve(entry.target);
                         }
-                        
-                        // 畫廊圖片 (Gallery Items) 彈出
                         if (entry.target.classList.contains('gallery-item')) {
                             entry.target.classList.add('visible');
                         }
                     } else {
-                         // 離開視圖時，Gallery items 重置
                         if (entry.target.classList.contains('gallery-item')) {
                             entry.target.classList.remove('visible');
                         }
@@ -437,25 +397,64 @@
                 });
             }, observerOptions);
 
-            // 註冊觀察器
             featureCards.forEach(card => observer.observe(card));
             galleryItems.forEach(item => observer.observe(item));
-
-            // 移除了 3. 沉浸式滾動效果 (Immersive Scroll) 的所有 JavaScript 邏輯
-            
         });
     </script>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        async function initAdanCapsule() {
+            try {
+                // 記得將 "你的_LIFF_ID" 換成實際的 ID
+                await liff.init({ liffId: "你的_LIFF_ID" });
+
+                if (!liff.isLoggedIn()) {
+                    console.log("阿丹提醒：尚未登入 LINE，無法讀取私有膠囊。");
+                } else {
+                    const profile = await liff.getProfile();
+                    const userId = profile.userId;
+
+                    const workerUrl = `https://roger9527.hanknah02.workers.dev?userId=${userId}`;
+                    const response = await fetch(workerUrl);
+                    const fileList = await response.json();
+
+                    console.log("🔓 時光膠囊已解鎖，發現檔案數：", fileList.length);
+                    
+                    if (fileList.length > 0) {
+                        renderAdanFiles(fileList);
+                    }
+                }
+            } catch (err) {
+                console.error("阿丹基地連線失敗:", err);
+            }
+        }
+
+        function renderAdanFiles(files) {
+            const galleryGrid = document.querySelector('.gallery-grid');
+            const capsuleTitle = document.createElement('h2');
+            capsuleTitle.innerText = "✨ 阿丹幫你存的私密回憶";
+            capsuleTitle.style.gridColumn = "1 / -1";
+            capsuleTitle.style.marginTop = "50px";
+            galleryGrid.appendChild(capsuleTitle);
+
+            files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item visible'; 
+                item.innerHTML = `
+                    <div style="padding: 20px; color: #fff; font-size: 14px; text-align: left; background: rgba(0,122,255,0.1); height: 100%;">
+                        <p style="font-weight: bold; margin-bottom: 8px;">📄 ${file.name}</p>
+                        <p style="font-size: 12px; opacity: 0.8;">⚖️ 大小：${file.size}</p>
+                        <p style="font-size: 12px; opacity: 0.8;">📅 上傳：${file.date}</p>
+                        <hr style="margin: 10px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <a href="#" style="color: var(--primary-color); text-decoration: none; font-size: 12px;">(目前僅供檢閱)</a>
+                    </div>
+                `;
+                galleryGrid.appendChild(item);
+            });
+        }
+
+        initAdanCapsule();
+    </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
