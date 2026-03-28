@@ -9,17 +9,13 @@
         body { background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         header { width: 100%; padding: 30px 20px; text-align: center; background: #1c1c1e; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #38383a; box-sizing: border-box; }
         .status-bar { font-size: 13px; color: var(--primary-color); margin-top: 8px; }
-        
         #adan-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; width: 100%; max-width: 1000px; padding: 20px; box-sizing: border-box; }
         .gallery-item { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid #38383a; text-align: center; cursor: pointer; transition: 0.2s; }
         .gallery-item:active { background: #2c2c2e; transform: scale(0.98); }
         .file-icon { font-size: 32px; margin-bottom: 8px; }
         .file-name { font-size: 13px; word-break: break-all; height: 36px; overflow: hidden; color: #eee; line-height: 1.4; }
-        
-        /* 彈窗樣式 */
         #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
         #preview-content, #preview-video { max-width: 95%; max-height: 60%; border-radius: 8px; margin-bottom: 20px; display: none; box-shadow: 0 4px 30px rgba(0,0,0,0.5); }
-        
         .modal-btns { display: flex; gap: 15px; width: 100%; max-width: 320px; }
         .btn { flex: 1; padding: 14px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         .btn-download { background: var(--primary-color); color: white; }
@@ -38,11 +34,8 @@
 
     <div id="preview-modal">
         <div id="preview-title" style="margin-bottom: 12px; font-weight: bold; text-align: center; width: 90%;"></div>
-        
         <img id="preview-content" src="">
-        
         <video id="preview-video" controls playsinline></video>
-        
         <div id="file-meta" style="color: #8e8e93; font-size: 12px; margin-bottom: 25px;"></div>
         <div class="modal-btns">
             <button class="btn btn-close" onclick="closePreview()">關閉</button>
@@ -69,44 +62,42 @@
         }
 
         async function openPreview(file) {
-            const profile = await liff.getProfile();
-            const modal = document.getElementById('preview-modal');
-            const img = document.getElementById('preview-content');
-            const video = document.getElementById('preview-video');
-            const title = document.getElementById('preview-title');
-            const meta = document.getElementById('file-meta');
-            const dlBtn = document.getElementById('real-download');
+            try {
+                const profile = await liff.getProfile();
+                const modal = document.getElementById('preview-modal');
+                const img = document.getElementById('preview-content');
+                const video = document.getElementById('preview-video');
+                const title = document.getElementById('preview-title');
+                const meta = document.getElementById('file-meta');
+                const dlBtn = document.getElementById('real-download');
 
-            title.innerText = file.name;
-            meta.innerText = `${file.size} | ${file.date}`;
-            
-            const url = `${API_URL}?userId=${profile.userId}&key=${encodeURIComponent(file.key)}`;
-            const type = getFileType(file.name);
+                title.innerText = file.name;
+                meta.innerText = `${file.size} | ${file.date}`;
+                const url = `${API_URL}?userId=${profile.userId}&key=${encodeURIComponent(file.key)}`;
+                const type = getFileType(file.name);
 
-            // 重設顯示狀態
-            img.style.display = 'none';
-            video.style.display = 'none';
-            video.src = ""; // 清除前一個影片
+                img.style.display = 'none';
+                video.style.display = 'none';
+                video.src = "";
 
-            if (type === 'image') {
-                img.src = url;
-                img.style.display = 'block';
-            } else if (type === 'video') {
-                video.src = url;
-                video.style.display = 'block';
-                // 嘗試載入影片
-                video.load();
-            }
+                if (type === 'image') {
+                    img.src = url;
+                    img.style.display = 'block';
+                } else if (type === 'video') {
+                    video.src = url;
+                    video.style.display = 'block';
+                    video.load();
+                }
 
-            dlBtn.onclick = () => { window.location.href = url + "&download=true"; };
-            modal.style.display = 'flex';
+                dlBtn.onclick = () => { window.location.href = url + "&download=true"; };
+                modal.style.display = 'flex';
+            } catch (err) { console.error("Preview Error:", err); }
         }
 
         function closePreview() {
             const modal = document.getElementById('preview-modal');
             const video = document.getElementById('preview-video');
             modal.style.display = 'none';
-            // 關閉時停止影片播放並清空，節省資源
             video.pause();
             video.src = "";
             document.getElementById('preview-content').src = "";
@@ -124,95 +115,15 @@
                 document.getElementById('loading').style.display = 'none';
                 
                 const galleryEl = document.getElementById('adan-gallery');
+                galleryEl.innerHTML = ""; // 清空舊內容
                 files.forEach(file => {
                     const card = document.createElement('div');
                     card.className = 'gallery-item';
                     card.onclick = () => openPreview(file);
-                    card.innerHTML = `
-                        <div class="file-icon">${getIcon(file.name)}</div>
-                        <div class="file-name">${file.name}</div>
-                    `;
+                    card.innerHTML = `<div class="file-icon">${getIcon(file.name)}</div><div class="file-name">${file.name}</div>`;
                     galleryEl.appendChild(card);
                 });
-            } catch (err) { console.error(err); }
-        }
-        window.onload = initAdan;
-    </script>
-</body>
-</html>
-    <div id="preview-modal">
-        <div id="preview-title" style="margin-bottom: 12px; font-weight: bold; text-align: center; width: 90%;"></div>
-        <img id="preview-content" src="">
-        <div id="file-meta" style="color: #8e8e93; font-size: 12px; margin-bottom: 25px;"></div>
-        <div class="modal-btns">
-            <button class="btn btn-close" onclick="closePreview()">關閉</button>
-            <button id="real-download" class="btn btn-download">下載回憶</button>
-        </div>
-    </div>
-
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script>
-        const API_URL = "https://adan-api.hanknah02.workers.dev";
-
-        function getIcon(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
-            if (['mp4', 'mov'].includes(ext)) return '🎥';
-            return '📄';
-        }
-
-        async function openPreview(file) {
-            const profile = await liff.getProfile();
-            const modal = document.getElementById('preview-modal');
-            const img = document.getElementById('preview-content');
-            const title = document.getElementById('preview-title');
-            const meta = document.getElementById('file-meta');
-            const dlBtn = document.getElementById('real-download');
-
-            title.innerText = file.name;
-            meta.innerText = `${file.size} | ${file.date}`;
-            
-            const url = `${API_URL}?userId=${profile.userId}&key=${encodeURIComponent(file.key)}`;
-            
-            if (getIcon(file.name) === '🖼️') {
-                img.src = url;
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
-            }
-
-            dlBtn.onclick = () => { window.location.href = url + "&download=true"; };
-            modal.style.display = 'flex';
-        }
-
-        function closePreview() {
-            document.getElementById('preview-modal').style.display = 'none';
-            document.getElementById('preview-content').src = "";
-        }
-
-        async function initAdan() {
-            try {
-                await liff.init({ liffId: "2009633088-LqIEGiJZ" });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                document.getElementById('status').innerText = `歡迎回來，${profile.displayName}`;
-
-                const response = await fetch(`${API_URL}?userId=${profile.userId}`);
-                const files = await response.json();
-                document.getElementById('loading').style.display = 'none';
-                
-                const galleryEl = document.getElementById('adan-gallery');
-                files.forEach(file => {
-                    const card = document.createElement('div');
-                    card.className = 'gallery-item';
-                    card.onclick = () => openPreview(file);
-                    card.innerHTML = `
-                        <div class="file-icon">${getIcon(file.name)}</div>
-                        <div class="file-name">${file.name}</div>
-                    `;
-                    galleryEl.appendChild(card);
-                });
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Init Error:", err); }
         }
         window.onload = initAdan;
     </script>
