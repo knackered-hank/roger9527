@@ -7,19 +7,20 @@
     <style>
         :root { --primary-color: #007aff; --bg-color: #000; --card-bg: #1c1c1e; --text-main: #fff; --text-sub: #8e8e93; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        header { width: 100%; padding: 30px 20px; text-align: center; background: #1c1c1e; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #38383a; }
+        header { width: 100%; padding: 30px 20px; text-align: center; background: #1c1c1e; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #38383a; box-sizing: border-box; }
         .status-bar { font-size: 13px; color: var(--primary-color); margin-top: 8px; }
         #adan-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; width: 100%; max-width: 1000px; padding: 20px; box-sizing: border-box; }
-        .gallery-item { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid #38383a; text-align: center; cursor: pointer; }
+        .gallery-item { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid #38383a; text-align: center; cursor: pointer; transition: background 0.2s; }
+        .gallery-item:active { background: #2c2c2e; }
         .file-icon { font-size: 32px; margin-bottom: 8px; }
-        .file-name { font-size: 13px; word-break: break-all; height: 36px; overflow: hidden; color: #eee; }
+        .file-name { font-size: 13px; word-break: break-all; height: 36px; overflow: hidden; color: #eee; line-height: 1.4; }
         
-        /* 彈窗樣式 */
-        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        #preview-content { max-width: 100%; max-height: 60%; border-radius: 8px; margin-bottom: 20px; }
-        .blur-img { filter: blur(4px); } /* 預覽圖模糊處理 */
-        .modal-btns { display: flex; gap: 20px; }
-        .btn { padding: 12px 30px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; }
+        /* 彈窗樣式 - 移除模糊 */
+        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        #preview-content { max-width: 95%; max-height: 65%; border-radius: 8px; margin-bottom: 20px; object-fit: contain; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        
+        .modal-btns { display: flex; gap: 15px; width: 100%; max-width: 320px; }
+        .btn { flex: 1; padding: 14px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         .btn-download { background: var(--primary-color); color: white; }
         .btn-close { background: #38383a; color: white; }
         .loading { margin-top: 50px; color: var(--text-sub); }
@@ -35,9 +36,9 @@
     <div id="loading" class="loading">正在掃描金庫...</div>
 
     <div id="preview-modal">
-        <div id="preview-title" style="margin-bottom: 15px; font-weight: bold;"></div>
-        <img id="preview-content" src="" class="blur-img">
-        <div id="file-meta" style="color: #8e8e93; font-size: 12px; margin-bottom: 20px;"></div>
+        <div id="preview-title" style="margin-bottom: 12px; font-weight: bold; text-align: center; width: 90%;"></div>
+        <img id="preview-content" src="">
+        <div id="file-meta" style="color: #8e8e93; font-size: 12px; margin-bottom: 25px;"></div>
         <div class="modal-btns">
             <button class="btn btn-close" onclick="closePreview()">關閉</button>
             <button id="real-download" class="btn btn-download">下載回憶</button>
@@ -47,11 +48,10 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const API_URL = "https://adan-api.hanknah02.workers.dev";
-        let currentKey = "";
 
         function getIcon(filename) {
             const ext = filename.split('.').pop().toLowerCase();
-            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
             if (['mp4', 'mov'].includes(ext)) return '🎥';
             return '📄';
         }
@@ -64,14 +64,11 @@
             const meta = document.getElementById('file-meta');
             const dlBtn = document.getElementById('real-download');
 
-            currentKey = file.key;
             title.innerText = file.name;
             meta.innerText = `${file.size} | ${file.date}`;
             
-            // 預覽網址
             const url = `${API_URL}?userId=${profile.userId}&key=${encodeURIComponent(file.key)}`;
             
-            // 如果是圖片就顯示模糊預覽，不是就顯示大圖示
             if (getIcon(file.name) === '🖼️') {
                 img.src = url;
                 img.style.display = 'block';
